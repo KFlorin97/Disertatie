@@ -53,8 +53,8 @@ public class MainActivity extends AppCompatActivity {
             mediaRecorder = new MediaRecorder();
             mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
             mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
             mediaRecorder.setOutputFile(getRecordingFilePath());
-            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
             mediaRecorder.prepare();
             mediaRecorder.start();
 
@@ -90,7 +90,6 @@ public class MainActivity extends AppCompatActivity {
         mProgress.show();
 
         StorageReference filepath = mStorage.child("Audio").child("newAudio.wav");
-        Toast.makeText(this, getRecordingFilePath(), Toast.LENGTH_SHORT).show();
         Uri uri = Uri.fromFile(new File(getRecordingFilePath()));
 
         filepath.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>()
