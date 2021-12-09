@@ -5,15 +5,21 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.ContextWrapper;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
 
@@ -23,10 +29,17 @@ public class MainActivity extends AppCompatActivity {
     MediaRecorder mediaRecorder;
     MediaPlayer mediaPlayer;
 
+    private StorageReference mStorage;
+    private ProgressDialog mProgress;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mStorage = FirebaseStorage.getInstance().getReference();
+        mProgress = new ProgressDialog(this);
 
         if (isMicrophone())
         {
@@ -42,6 +55,8 @@ public class MainActivity extends AppCompatActivity {
             mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
             mediaRecorder.setOutputFile(getRecordingFilePath());
             mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+            mediaRecorder.prepare();
+            mediaRecorder.start();
 
             Toast.makeText(this, "Recording started", Toast.LENGTH_SHORT).show();
         }
@@ -66,6 +81,27 @@ public class MainActivity extends AppCompatActivity {
         {
             e.printStackTrace();
         }
+        uploadAudio();
+    }
+
+    private void uploadAudio()
+    {
+        mProgress.setMessage("Uploading audio ...");
+        mProgress.show();
+
+        StorageReference filepath = mStorage.child("Audio").child("newAudio.wav");
+        Toast.makeText(this, getRecordingFilePath(), Toast.LENGTH_SHORT).show();
+        Uri uri = Uri.fromFile(new File(getRecordingFilePath()));
+
+        filepath.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>()
+        {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot)
+            {
+                mProgress.dismiss();
+                mProgress.setMessage("Upload finished.");
+            }
+        });
     }
 
     public void btnPlayPressed(View v)
