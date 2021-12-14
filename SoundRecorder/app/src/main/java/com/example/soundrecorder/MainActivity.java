@@ -5,6 +5,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ContextWrapper;
 import android.content.pm.PackageManager;
@@ -14,6 +15,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -28,16 +30,29 @@ public class MainActivity extends AppCompatActivity {
     private static int MICROPHONE_PERMISSION_CODE = 200;
     MediaRecorder mediaRecorder;
     MediaPlayer mediaPlayer;
+    TextView commandTextView;
 
+    private int counter = 0;
     private StorageReference mStorage;
     private ProgressDialog mProgress;
-
+    private String[] commands = {
+            "Hello",
+            "My name is ... ",
+            "I am ... years old",
+            "I come from ...",
+            "I live in ...",
+            "I study ...",
+            "I work as a ..."
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        commandTextView = (TextView)findViewById(R.id.messageTextView);
 
+        notificationMessage("You are going to see a list of sentences. Please press play and record your voice");
+        commandTextView.setText(commands[counter]);
         mStorage = FirebaseStorage.getInstance().getReference();
         mProgress = new ProgressDialog(this);
 
@@ -45,6 +60,14 @@ public class MainActivity extends AppCompatActivity {
         {
             getMicrophonePermission();
         }
+    }
+
+    private void notificationMessage(String message)
+    {
+        AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+        alertDialog.setTitle("Voice set-up process");
+        alertDialog.setMessage(message);
+        alertDialog.show();
     }
 
     public void btnRecordPressed(View v)
@@ -64,7 +87,6 @@ public class MainActivity extends AppCompatActivity {
         {
             e.printStackTrace();
         }
-
     }
 
     public void btnStopPressed(View v)
@@ -81,15 +103,26 @@ public class MainActivity extends AppCompatActivity {
         {
             e.printStackTrace();
         }
-        uploadAudio();
+
+        if (counter < commands.length)
+        {
+            uploadAudio();
+            counter++;
+            commandTextView.setText(String.valueOf(commands.length));
+        }
+        else
+        {
+            commandTextView.setText("Configuration completed");
+            notificationMessage("Set-up completed");
+        }
     }
 
     private void uploadAudio()
     {
         mProgress.setMessage("Uploading audio ...");
         mProgress.show();
-
-        StorageReference filepath = mStorage.child("Audio").child("newAudio.wav");
+        String filename = commands[counter] + ".wav";
+        StorageReference filepath = mStorage.child("Audio").child(filename);
         Uri uri = Uri.fromFile(new File(getRecordingFilePath()));
 
         filepath.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>()
@@ -145,7 +178,7 @@ public class MainActivity extends AppCompatActivity {
     {
         ContextWrapper contextWrapper = new ContextWrapper(getApplicationContext());
         File audioDirectory = contextWrapper.getExternalFilesDir(Environment.DIRECTORY_MUSIC);
-        File file = new File(audioDirectory, "RecordingFile" + ".wav");
+        File file = new File(audioDirectory, commands[counter] + ".wav");
         return file.getPath();
     }
 }
