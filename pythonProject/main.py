@@ -1,3 +1,4 @@
+import os
 import pyrebase
 
 firebaseConfig = {
@@ -13,12 +14,12 @@ firebaseConfig = {
 
 itemsToDownload = {
     "Hello",
-    "My name is ...",
-    "I am ... years old",
-    "I come from ...",
-    "I live in ...",
-    "I study ...",
-    "I work as a ..."
+    "Name",
+    "Age",
+    "From",
+    "LiveIn",
+    "Study",
+    "Work"
 }
 
 def extractData():
@@ -26,11 +27,20 @@ def extractData():
     storage = firebase.storage()
 
     pathOnCloud = "Audio/"
-    pathLocal = "D:\Disertatie\Disertatie\pythonProject"
+    pathLocal = "D:/Disertatie/Disertatie/pythonProject"
+    if not os.path.exists(pathLocal):
+        os.makedirs(pathLocal)
 
     for item in itemsToDownload:
-        storage.child(pathOnCloud + item + ".wav").download(pathLocal,item + ".wav")
+        storage.child(pathOnCloud + item + ".3gp").download(pathLocal,item + ".3gp")
 
+    for file in os.listdir(pathLocal):
+        if file.endswith(".3gp"):
+            newFile = file[:-3].replace(".", "")
+            sound = pathLocal + "/" + file
+            result = pathLocal + "/" + newFile + ".wav"
+            os.system(f'ffmpeg -i "{sound}" "{result}"')
+            os.remove(sound)
 
 if __name__ == '__main__':
     extractData()
